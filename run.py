@@ -138,7 +138,8 @@ def main():
     
     try:
         # Импорт и запуск приложения
-        from src.main import main as app_main
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+        from main import main as app_main
         app_main()
     except KeyboardInterrupt:
         print("\n👋 Приложение остановлено пользователем")

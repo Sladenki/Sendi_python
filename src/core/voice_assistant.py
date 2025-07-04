@@ -4,6 +4,13 @@
 
 import speech_recognition as sr
 from PyQt5.QtCore import QThread, pyqtSignal
+import sys
+import os
+
+# Добавляем путь к модулям
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from commands.command_processor import CommandProcessor
+from core.tts_engine import TTSEngine
 
 
 class VoiceAssistant(QThread):
@@ -18,6 +25,12 @@ class VoiceAssistant(QThread):
         self.config = config or {}
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
+        
+        # Обработчик команд
+        self.command_processor = CommandProcessor()
+        
+        # TTS движок
+        self.tts_engine = None
         
         # Настройка параметров распознавания
         self.timeout = self.config.get('timeout', 1)
@@ -38,6 +51,34 @@ class VoiceAssistant(QThread):
                 )
         except Exception as e:
             print(f"Ошибка настройки микрофона: {e}")
+    
+    def speak(self, text):
+        """Произнести текст"""
+        try:
+            if self.tts_engine and self.tts_engine.isRunning():
+                self.tts_engine.stop()
+            
+            self.tts_engine = TTSEngine(text, self.config)
+            self.tts_engine.start()
+        except Exception as e:
+            print(f"Ошибка TTS: {e}")
+    
+    def process_command(self, text):
+        """Обработать команду"""
+        try:
+            success, response = self.command_processor.process_command(text)
+            
+            if success:
+                self.speak(response)
+                self.status_changed.emit(f"Выполнено: {response}")
+            else:
+                self.speak("Команда не найдена")
+                self.status_changed.emit(f"Ошибка: {response}")
+                
+        except Exception as e:
+            error_msg = f"Ошибка обработки команды: {str(e)}"
+            self.speak("Произошла ошибка")
+            self.status_changed.emit(error_msg)
     
     def run(self):
         """Основной цикл распознавания речи"""
@@ -62,12 +103,9 @@ class VoiceAssistant(QThread):
                     self.status_changed.emit(f"Распознано: {text}")
                     self.speech_recognized.emit(text)
                     
-                    # Обрабатываем команду в любом случае
+                    # Обрабатываем команду
                     self.command_received.emit(text)
-                    if "sendi" in text:
-                        self.status_changed.emit("Команда получена")
-                    else:
-                        self.status_changed.emit("Команда обработана")
+                    self.process_command(text)
                         
                 except sr.UnknownValueError:
                     pass
@@ -82,6 +120,8 @@ class VoiceAssistant(QThread):
     def stop(self):
         """Остановка потока"""
         self.running = False
+        if self.tts_engine and self.tts_engine.isRunning():
+            self.tts_engine.stop()
     
     def update_config(self, new_config):
         """Обновление конфигурации"""
