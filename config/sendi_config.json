@@ -1,0 +1,32 @@
+{
+    "voice": {
+        "rate": 150,
+        "volume": 0.8,
+        "voice_id": null,
+        "language": "ru-RU"
+    },
+    "recognition": {
+        "timeout": 1,
+        "phrase_time_limit": 5,
+        "ambient_duration": 1,
+        "language": "ru-RU"
+    },
+    "ui": {
+        "window_width": 800,
+        "window_height": 600,
+        "theme": "dark",
+        "accent_color": "#8e2de2",
+        "background_color": "#121212"
+    },
+    "logging": {
+        "log_file": "logs/sendi.log",
+        "max_log_entries": 1000,
+        "auto_export": false,
+        "export_interval": 24
+    },
+    "commands": {
+        "wake_word": "sendi",
+        "auto_start": false,
+        "sound_feedback": true
+    }
+}
