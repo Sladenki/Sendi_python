@@ -4,6 +4,7 @@
 
 from typing import Tuple
 from .system_commands import SystemCommands
+from .web_commands import WebCommands
 
 
 class CommandProcessor:
@@ -11,7 +12,11 @@ class CommandProcessor:
     
     def __init__(self):
         self.system_commands = SystemCommands()
-        self.all_commands = self.system_commands.get_all_commands()
+        self.web_commands = WebCommands()
+        self.all_commands = (
+            self.system_commands.get_all_commands() + 
+            self.web_commands.get_all_commands()
+        )
     
     def process_command(self, command_text: str) -> Tuple[bool, str]:
         """
