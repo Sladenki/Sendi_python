@@ -16,6 +16,7 @@ class VoiceAssistant(QThread):
     """Поток для работы с голосовым помощником"""
     command_received = pyqtSignal(str)
     status_changed = pyqtSignal(str)
+    speech_recognized = pyqtSignal(str)  # Новый сигнал
     
     def __init__(self):
         super().__init__()
@@ -40,10 +41,14 @@ class VoiceAssistant(QThread):
                 try:
                     text = self.recognizer.recognize_google(audio, language='ru-RU').lower()
                     self.status_changed.emit(f"Распознано: {text}")
+                    self.speech_recognized.emit(text)  # Эмитируем всегда
                     
+                    # Обрабатываем команду в любом случае
+                    self.command_received.emit(text)
                     if "sendi" in text:
-                        self.command_received.emit(text)
                         self.status_changed.emit("Команда получена")
+                    else:
+                        self.status_changed.emit("Команда обработана")
                         
                 except sr.UnknownValueError:
                     pass
@@ -251,6 +256,7 @@ class SendiApp(QMainWindow):
         self.voice_assistant = VoiceAssistant()
         self.voice_assistant.command_received.connect(self.process_command)
         self.voice_assistant.status_changed.connect(self.update_status)
+        self.voice_assistant.speech_recognized.connect(self.show_recognized_text)
     
     def speak_welcome(self):
         """Приветственное сообщение"""
@@ -302,7 +308,9 @@ class SendiApp(QMainWindow):
             self.speak(response)
             self.log_action("Система", f"Ответ: {response}")
     
-
+    def show_recognized_text(self, text):
+        """Показать распознанный текст пользователя в логах"""
+        self.log_action("Микрофон", f"Вы сказали: {text}")
     
     def update_status(self, status):
         """Обновление статуса"""
